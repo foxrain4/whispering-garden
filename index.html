@@ -80,7 +80,7 @@
   </div>
   <div id="message">Listen... they remember you.</div>
 </body>
-  <script>
+ <script>
 const symbols = ['🜁','🜂','🜃','🜄','🝓','🜏'];
 const plants = document.querySelectorAll('.plant');
 const message = document.getElementById('message');
@@ -91,8 +91,35 @@ let level = 1;
 let isPlayerTurn = false;
 let plantMemory = 3;
 
-function getRandomSymbol() {
-  return symbols[Math.floor(Math.random() * symbols.length)];
+const whispers = [
+  "The garden remembers what you forget.",
+  "In stillness, the petals speak.",
+  "Some memories root deeper than thought.",
+  "Listen closely... the wind carries echoes.",
+  "With each bloom, a silence is understood.",
+  "You are not the first to wander here.",
+  "The soil dreams in symbols."
+];
+
+function checkEnding() {
+  if (level >= 12) {
+    resetGame(true);
+  }
+}
+
+function showWhisper() {
+  const w = whispers[Math.floor(Math.random() * whispers.length)];
+  message.textContent = `🌀 Whisper: “${w}”`;
+}
+
+function chime(index) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === 'suspended') ctx.resume();
+  const osc = ctx.createOscillator();
+  osc.frequency.value = 300 + index * 50;
+  osc.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.2);
 }
 
 function flash(symbol, duration = 700) {
@@ -121,15 +148,6 @@ function playSequence() {
   }, delay);
 }
 
-function chime(index) {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = ctx.createOscillator();
-  osc.frequency.value = 300 + index * 50;
-  osc.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.2);
-}
-
 function growPlant() {
   level++;
   plantMemory = Math.min(3 + level, 9);
@@ -140,6 +158,24 @@ function growPlant() {
   playerInput = [];
   playSequence();
   checkEnding();
+}
+
+function resetGame(victory) {
+  level = 1;
+  currentSequence = [];
+  playerInput = [];
+
+  if (victory) {
+    message.textContent = "🌞 You remembered everything. The garden opens.";
+    document.body.classList.add('final-state');
+    document.getElementById('garden').innerHTML = `
+      <div class="final-message">🕊️<br/>You have become the memory.<br/>Peace surrounds you.<br/><br/>🌿 Thank you for listening.</div>
+    `;
+    return;
+  }
+
+  showWhisper();
+  setTimeout(() => growPlant(), 2500);
 }
 
 plants.forEach((plant, index) => {
@@ -165,54 +201,7 @@ plants.forEach((plant, index) => {
   });
 });
 
-function resetGame(victory) {
-  level = 1;
-  currentSequence = [];
-  playerInput = [];
-  message.textContent = victory ? "🌞 You remembered everything." : "🌑 Forgotten. Try again.";
-  setTimeout(() => growPlant(), 2000);
-}
-
-growPlant(); // start game
-    
-const whispers = [
-  "The garden remembers what you forget.",
-  "In stillness, the petals speak.",
-  "Some memories root deeper than thought.",
-  "Listen closely... the wind carries echoes.",
-  "With each bloom, a silence is understood.",
-  "You are not the first to wander here.",
-  "The soil dreams in symbols."
-];
-
-function showWhisper() {
-  const w = whispers[Math.floor(Math.random() * whispers.length)];
-  message.textContent = `🌀 Whisper: “${w}”`;
-}
-
-function resetGame(victory) {
-  level = 1;
-  currentSequence = [];
-  playerInput = [];
-
-  if (victory) {
-    message.textContent = "🌞 You remembered everything. The garden opens.";
-    document.body.classList.add('final-state');
-    document.querySelector('#garden').innerHTML = `
-      <div class="final-message">🕊️<br/>You have become the memory.<br/>Peace surrounds you.<br/><br/>🌿 Thank you for listening.</div>
-    `;
-    return;
-  }
-
-  showWhisper();
-  setTimeout(() => growPlant(), 2500);
-}
-
-// Optional ending if they reach a memory limit
-function checkEnding() {
-  if (level >= 12) {
-    resetGame(true);
-  }
-}
+growPlant();
 </script>
+
 </html>
