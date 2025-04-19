@@ -109,10 +109,15 @@ const whispers = [
 ];
 
 function checkEnding() {
-  if (level >= 12) {
-    resetGame(true);
-  }
+  message.textContent = "The garden falls still, and you remember it always.";
+  document.body.classList.add("final-state");
+  document.body.innerHTML = `<div class="final-message">
+    🌸 The garden has told you all it knows. 🌸<br><br>
+    You remembered each whisper.<br>
+    May its peace stay with you.
+  </div>`;
 }
+
 
 function showWhisper() {
   const w = whispers[Math.floor(Math.random() * whispers.length)];
