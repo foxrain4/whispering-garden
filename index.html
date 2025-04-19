@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" href="data:,">
   <meta charset="UTF-8">
   <title>Whispering Garden</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
   <style>
     body {
       margin: 0;
@@ -33,27 +33,18 @@
       border-radius: 1rem;
       padding: 1rem;
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
       box-shadow: 0 0 8px #2a2a2a;
+      font-size: 2.5rem;
     }
     .plant.active {
-  transform: scale(1.2);
-  background-color: #fff;
-  box-shadow: 0 0 12px #fff;
-}
-
+      transform: scale(1.2);
+      background-color: #fff;
+      box-shadow: 0 0 12px #fff;
+      color: #000;
+    }
     .plant:hover {
       transform: scale(1.05);
-    }
-    .symbol {
-      font-size: 2.2rem;
-      margin: 0.3em;
-      opacity: 0.6;
-      transition: opacity 0.3s, transform 0.2s;
-    }
-    .symbol.active {
-      opacity: 1;
-      transform: scale(1.3);
     }
     #message {
       font-style: italic;
@@ -61,18 +52,16 @@
       color: #b0e0cc;
     }
     .final-state {
-  background: linear-gradient(#f0f8ff, #d6f5d6);
-  animation: fadein 4s ease-in-out;
-}
-
-.final-message {
-  text-align: center;
-  font-size: 1.6rem;
-  margin-top: 100px;
-  color: #2a5c2a;
-  line-height: 2em;
-}
-
+      background: linear-gradient(#f0f8ff, #d6f5d6);
+      animation: fadein 4s ease-in-out;
+    }
+    .final-message {
+      text-align: center;
+      font-size: 1.6rem;
+      margin-top: 100px;
+      color: #2a5c2a;
+      line-height: 2em;
+    }
   </style>
 </head>
 <body>
@@ -86,134 +75,88 @@
     <div class="plant" data-id="5">🜏</div>
   </div>
   <div id="message">Listen... they remember you.</div>
+
+  <script>
+    const garden = document.getElementById('garden');
+    const plants = document.querySelectorAll('.plant');
+    const message = document.getElementById('message');
+
+    let sequence = [];
+    let playerInput = [];
+    let acceptingInput = false;
+
+    function flashPlant(index) {
+      const plant = plants[index];
+      plant.classList.add('active');
+      setTimeout(() => {
+        plant.classList.remove('active');
+      }, 500);
+    }
+
+    function playSequence() {
+      acceptingInput = false;
+      let i = 0;
+      const interval = setInterval(() => {
+        flashPlant(sequence[i]);
+        i++;
+        if (i >= sequence.length) {
+          clearInterval(interval);
+          acceptingInput = true;
+          message.textContent = "What do you remember?";
+        }
+      }, 800);
+    }
+
+    function growPlant() {
+      const next = Math.floor(Math.random() * plants.length);
+      sequence.push(next);
+      playSequence();
+    }
+
+    function checkInput(index) {
+      if (!acceptingInput) return;
+
+      playerInput.push(index);
+      flashPlant(index);
+
+      for (let i = 0; i < playerInput.length; i++) {
+        if (playerInput[i] !== sequence[i]) {
+          message.textContent = "The memory fades...";
+          sequence = [];
+          playerInput = [];
+          setTimeout(growPlant, 1500);
+          return;
+        }
+      }
+
+      if (playerInput.length === sequence.length) {
+        if (sequence.length === 10) {
+          checkEnding();
+          return;
+        }
+
+        message.textContent = "Yes... that's how it was.";
+        playerInput = [];
+        setTimeout(growPlant, 1000);
+      }
+    }
+
+    function checkEnding() {
+      document.body.classList.add("final-state");
+      document.body.innerHTML = `
+        <div class="final-message">
+          🌸 The garden has told you all it knows. 🌸<br><br>
+          You remembered each whisper.<br>
+          May its peace stay with you.
+        </div>`;
+    }
+
+    plants.forEach((plant, index) => {
+      plant.addEventListener('click', () => checkInput(index));
+    });
+
+    // Start the first sequence
+    growPlant();
+  </script>
 </body>
- <script>
-const symbols = ['🜁','🜂','🜃','🜄','🝓','🜏'];
-const plants = document.querySelectorAll('.plant');
-const message = document.getElementById('message');
-
-let currentSequence = [];
-let playerInput = [];
-let level = 1;
-let isPlayerTurn = false;
-let plantMemory = 3;
-
-const whispers = [
-  "The garden remembers what you forget.",
-  "In stillness, the petals speak.",
-  "Some memories root deeper than thought.",
-  "Listen closely... the wind carries echoes.",
-  "With each bloom, a silence is understood.",
-  "You are not the first to wander here.",
-  "The soil dreams in symbols."
-];
-
-function checkEnding() {
-  message.textContent = "The garden falls still, and you remember it always.";
-  document.body.classList.add("final-state");
-  document.body.innerHTML = `<div class="final-message">
-    🌸 The garden has told you all it knows. 🌸<br><br>
-    You remembered each whisper.<br>
-    May its peace stay with you.
-  </div>`;
-}
-
-
-function showWhisper() {
-  const w = whispers[Math.floor(Math.random() * whispers.length)];
-  message.textContent = `🌀 Whisper: “${w}”`;
-}
-
-function chime(index) {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  if (ctx.state === 'suspended') ctx.resume();
-  const osc = ctx.createOscillator();
-  osc.frequency.value = 300 + index * 50;
-  osc.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.2);
-}
-
-function flash(symbol, duration = 700) {
-  symbol.classList.add('active');
-  setTimeout(() => {
-    symbol.classList.remove('active');
-  }, duration);
-}
-
-function playSequence() {
-  isPlayerTurn = false;
-  let delay = 0;
-  message.textContent = `🌱 Remember the pattern... (Level ${level})`;
-
-  currentSequence.forEach((symbolIndex, i) => {
-    setTimeout(() => {
-      flash(plants[symbolIndex]);
-      chime(symbolIndex);
-    }, delay);
-    delay += 800;
-  });
-
-  setTimeout(() => {
-    isPlayerTurn = true;
-    message.textContent = '🌾 Your turn. Tap the plants in order.';
-  }, delay);
-}
-
-function growPlant() {
-  level++;
-  plantMemory = Math.min(3 + level, 9);
-  currentSequence = [];
-  for (let i = 0; i < plantMemory; i++) {
-    currentSequence.push(Math.floor(Math.random() * plants.length));
-  }
-  playerInput = [];
-  playSequence();
-  checkEnding();
-}
-
-function resetGame(victory) {
-  level = 1;
-  currentSequence = [];
-  playerInput = [];
-
-  if (victory) {
-    message.textContent = "🌞 You remembered everything. The garden opens.";
-    document.body.classList.add('final-state');
-    document.getElementById('garden').innerHTML = `
-      <div class="final-message">🕊️<br/>You have become the memory.<br/>Peace surrounds you.<br/><br/>🌿 Thank you for listening.</div>
-    `;
-    return;
-  }
-
-  showWhisper();
-  setTimeout(() => growPlant(), 2500);
-}
-
-plants.forEach((plant, index) => {
-  plant.addEventListener('click', () => {
-    if (!isPlayerTurn) return;
-
-    flash(plant, 300);
-    chime(index);
-    playerInput.push(index);
-
-    const currentStep = playerInput.length - 1;
-
-    if (playerInput[currentStep] !== currentSequence[currentStep]) {
-      message.textContent = "🌑 The garden fades... You forgot.";
-      setTimeout(() => resetGame(false), 1500);
-      return;
-    }
-
-    if (playerInput.length === currentSequence.length) {
-      message.textContent = "🌸 A new memory blooms...";
-      setTimeout(() => growPlant(), 1200);
-    }
-  });
-});
-
-growPlant();
-</script>
-
 </html>
